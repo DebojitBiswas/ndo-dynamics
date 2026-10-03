@@ -6,7 +6,7 @@ A = json.load(open(os.path.join(HERE, "exp2_aggregate.json")))
 worlds = ['AR1', 'PWC', 'SINE']; labels = {'AR1': 'AR(1) latent\n(well specified)', 'PWC': 'piecewise-constant\n(misspecified)', 'SINE': 'sinusoidal\n(misspecified)'}
 ests = ['NAIVE', 'NDO-Z', 'DKF', 'DKF-B']
 C = {'NAIVE': '#eb6834', 'NDO-Z': '#2a78d6', 'DKF': '#eda100', 'DKF-B': '#1baf7a'}
-L = {'NAIVE': 'Naive one-step', 'NDO-Z': 'NDO + trajectory latent', 'DKF': 'Latent-process NDO (b learned)', 'DKF-B': 'Latent-process NDO + known input gain'}
+L = {'NAIVE': 'NAIVE (one-step simulator)', 'NDO-Z': 'NDO-Z (trajectory latent)', 'DKF': 'DKF (latent process, b learned)', 'DKF-B': 'DKF-B (latent process, b known)'}
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": "#b5b4ae",
                      "xtick.color": "#52514e", "ytick.color": "#52514e", "axes.grid": True, "grid.color": "#e6e5e0", "grid.linewidth": 0.6, "axes.axisbelow": True})
 fig, axes = plt.subplots(1, 2, figsize=(11, 3.5), constrained_layout=True)

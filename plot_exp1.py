@@ -7,7 +7,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 R = json.load(open(os.path.join(HERE, "exp1_results.json")))
 u = np.array(R["u_grid"]); gt = np.array(R["gt"])
 C = {"NAIVE": "#eb6834", "NDO-Z": "#2a78d6", "NDO-ZB": "#1baf7a"}
-L = {"NAIVE": "Naive neural simulator", "NDO-Z": "NDO + trajectory latent", "NDO-ZB": "NDO + latent + known input gain"}
+L = {"NAIVE": "NAIVE (one-step simulator)", "NDO-Z": "NDO-Z (trajectory latent)", "NDO-ZB": "NDO-ZB (trajectory latent + known gain)"}
 
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
                      "axes.edgecolor": "#b5b4ae", "axes.labelcolor": "#0b0b0b", "xtick.color": "#52514e",
