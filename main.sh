@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Code Ocean master script.
+# Code Ocean master script (main.sh; the generated `run` wrapper calls `bash main.sh`).
 #   Default (FULL unset): reproduces every theory table in minutes and regenerates all figures from the
 #   committed result files.  FULL=1 additionally re-runs the neural experiments (hours on CPU).
 #   Experiments 6-7 run only if /data/ngsim_us101_slim.csv is present (public NGSIM US-101 export; see README).
