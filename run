@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Code Ocean master script.
+#   Default (FULL unset): reproduces every theory table in minutes and regenerates all figures from the
+#   committed result files.  FULL=1 additionally re-runs the neural experiments (hours on CPU).
+#   Experiments 6-7 run only if /data/ngsim_us101_slim.csv is present (public NGSIM US-101 export; see README).
+set -euo pipefail
+WORK=/tmp/work; RES=/results
+rm -rf "$WORK"; mkdir -p "$WORK" "$RES"; cp -r /code/. "$WORK"/; cd "$WORK"
+export EXP2_THREADS="${EXP2_THREADS:-2}"; export MPLBACKEND=Agg
+log(){ echo; echo "=== $* ==="; }
+
+log "Theory: Lemma 1 (Table I)";               python3 theory_lemma1.py            | tee "$RES/theory_lemma1.txt"
+log "Theory: vector Lemma 1 (Table S1)";       python3 theory_lemma1_vector.py     | tee "$RES/theory_lemma1_vector.txt"
+log "Theory: linear estimators";               python3 theory_estimators.py        | tee "$RES/theory_estimators.txt"
+log "Theory: Prop. 2 limit with Nickell term (Table S2)"; python3 theory_prop3.py | tee "$RES/theory_prop2_limit.txt"
+log "Theory: Anderson-Hsiao IV baseline";      python3 theory_iv_baseline.py       | tee "$RES/theory_iv_baseline.txt"
+log "Theory: quasi-differenced GMM";           python3 theory_iv_qd.py             | tee "$RES/theory_iv_qd.txt"
+log "Theory: generic identifiability, exact rank (Prop. 3)"; python3 theory_generic_identifiability.py | tee "$RES/theory_generic_identifiability.txt"
+log "Theory: Kalman-ML (Result 1, Table S3)";  python3 theory_kalman_ml.py         | tee "$RES/theory_kalman_ml.txt"
+if [ "${FISHER:-1}" = "1" ]; then
+  log "Theory: Fisher information vs rho (Fig. 1) and vs sigma_n"; python3 theory_fisher_curve.py | tee "$RES/theory_fisher_curve.txt"; python3 theory_fisher_sign.py | tee "$RES/theory_fisher_sign.txt"
+fi
+
+if [ "${FULL:-0}" = "1" ]; then
+  log "Neural experiments (FULL=1): this takes several hours on CPU"
+  python3 exp1_confounded_vehicle.py
+  for s in 11 21 22; do EXP2_SEED=$s python3 exp2_latent_process_ndo.py; done; python3 aggregate_exp2.py
+  for s in 11 21 22; do for r in 0.99 0.9 0.7 0.3; do EXP2_SEED=$s python3 exp3_nonlinear_and_rho.py RHO $r; done; done
+  for s in 11 21; do EXP2_SEED=$s python3 exp3_nonlinear_and_rho.py NL; done
+  for w in AR1 NL RHO0.3 RHO0.99; do for s in 11 21 22; do EXP2_SEED=$s python3 exp4_p2_and_sensitivity.py P2 $w; done; done
+  for b in 0.8 0.9 1.1 1.2; do EXP2_SEED=11 python3 exp4_p2_and_sensitivity.py WRONGB $b; done
+  for b in 0.9 1.1; do for s in 21 22; do EXP2_SEED=$s python3 exp4_p2_and_sensitivity.py WRONGB $b; done; done
+  for s in 11 21; do EXP2_SEED=$s python3 exp5_twostate.py; EXP2_SEED=$s python3 exp8_ablation.py; done
+fi
+
+NG=/data/ngsim_us101_slim.csv
+if [ -f "$NG" ]; then
+  log "Experiment 6 (NGSIM US-101) and semi-synthetic study"
+  for s in 0 1 2; do python3 realdata_ngsim.py "$NG" --seed $s; done
+  EXP7_RHO=0.80 EXP7_LAMBDAS=0.0,0.6 EXP2_SEED=0 python3 exp7_semisynthetic.py "$NG"
+  EXP7_RHO=0.98 EXP7_LAMBDAS=0.6     EXP2_SEED=0 python3 exp7_semisynthetic.py "$NG"
+else
+  echo "NGSIM file not found at $NG; skipping Experiments 6-7 (results from the paper's run are in realdata_results.json / exp7_results_*.json)."
+fi
+
+log "Figures (from result files)"
+python3 plot_exp1.py; python3 plot_exp2.py; python3 plot_fisher.py
+cp -f *.png "$RES"/ 2>/dev/null || true
+mkdir -p "$RES/result_json"; cp -f *.json "$RES/result_json"/
+log "Done. Outputs in $RES"
